@@ -46,10 +46,87 @@ If you have a 3D printer, here are the relevant settings I use. Honestly, I'm st
 If you don't have a 3D printer, I've used Shapeways in the past and like them, but there are other places that I'm sure could do a good job as well. 
 
 ### Firmware
-Before you start assembling the hardware, it's a good idea to prepare your firmware. You'll need to compile locally for trackpad support. Luckily, this pretty straightforward if you use ZSA's QMK fork (you can still use mainline QMK, but it's a little trickier). Go to your layout in Oryx and choose "Download Source" at the bottom for your Oryx layout files. Then, follow the readme to get set up.
+Before you start assembling the hardware, it's a good idea to prepare your firmware. You'll need to compile locally for trackpad support. Luckily, this pretty straightforward if you use ZSA's QMK fork (you can still use mainline QMK, but it's a little trickier). Go to your layout in Oryx and choose "Download Source" at the bottom for your Oryx layout files. 
 
-First, try compiling your layout without any changes to make sure that works. If not, work on fixing that first.
+##### Should I make changes to the source files manually or using a script?
+I quickly noticed that applying the trackpad configuration to the source files became tedious and made me not want to update my keyboard layout in the Oryx configurator. 
+To tackle this issue I created a script that appends the configuration each time I run the script. Way easier!
+##### Make changes to the source files using a script
+##### 1. Setup QMK compile environment
+0. Read this guide entirely before starting :-)
+1. Start this guide: https://github.com/Rookwork/saucer-diy-voyager-trackpad?tab=readme-ov-file#firmware
+2. Which instructs you to setup a QMK compile environment: https://msys.qmk.fm/
+	- i Ensure you compile against the ZSA repository:
+	  `git remote add zsa https://github.com/zsa/qmk_firmware.git`
+	  `git fetch zsa`
+	  `git checkout firmware24`
+3. Start *QMK MSYS*, a terminal opens, we are almost ready to compile!
 
+##### 2. Make changes to your firmware
+**2.1 Create a new folder to use for compiling custom firmware**
+1. Inside the QMK MYS terminal navigate to the QMK folder using:
+	`qmk cd` 
+2. Take note of the directory using
+	`pwd`
+	For me the output of `pwd` is: 
+	`C:\Users\<user>\qmk_firmware`
+3. Navigate to the `pwd`-directory in the file explorer and navigate to the `keymaps` folder.
+	For me the path is: 
+	`C:\Users\p5weg\qmk_firmware\keyboards\zsa\voyager\keymaps`
+4. Create a new folder named `patched_voyager_firmware`, keep this folder open in your explorer, we will need it in a bit
+	*This folder will hold our modified firmware files and patch script* 
+	   
+**2.2 Place firmware files in the new folder used for compiling**
+1. Navigate to the layout for your Voyager (at https://configure.zsa.io/)
+2. Create a new 'Mouse' layer and assign the left and right mouse click to your preferred buttons. This layer will automatically be activated when you touch the trackpad.
+3. When you are done, click the `Download Source`-button, below the orange `Download this layout`-button
+4. A .zip file will be downloaded, extract it to a convenient spot.
+5. From this .zip file, in the included `source` folder, we need the following three files:
+	- `config.h`
+	- `keymap.c`
+	- `rules.mk`
+6. Copy these three files to the `patched_voyager_firmware` folder you created earlier
+	   
+**2.3 Patch firmware source to enable trackpad support**
+1. So, in the project files a script file is included named:
+	`patch_voyager_firmware.ps1`
+	This script contains three sets of configuration:
+	- `RULES_MK_CONTENT`
+	- `CONFIG_CONTENT`
+	- `KEYMAP_CONTENT`
+	Edit these configurations to fit your needs :-)
+	I have documented the purpose of each line that is in there right now 
+	Go to the [QMK documentation for the Cirque trackpad](https://docs.qmk.fm/features/pointing_device#cirque-trackpad) to see what is available
+2. Copy this script and place it in the `patched_voyager_firmware` folder you created earlier
+3. Right click the script and choose 'Run with Powershell'
+4. Follow the instructions in the script. 
+	After the script has finished, your files have been patched for use with the trackpad!  
+
+**2.4 Compile the patched firmware files**
+1. Run the following command to compile your edited firmware
+  `qmk compile -kb zsa/voyager -km patched_voyager_firmware`
+2. Be patient, compiling might take a bit of time to initiate, a bunch of OKs will appear and eventually it will complete
+3. The `.bin` file that you need to flash to your Voyager will be stored in the `qmk cd` folder, which for me was:
+	`C:\Users\<user>\qmk_firmware`
+
+**2.5 Flash the firmware to your Voyager**
+1. You have now created the firmware file that needs to be loaded into your Voyager!
+2. Open keymap
+3. Select 'Flash'
+4. Select the `.bin` file
+5. Start flashing
+6. Done, you can now use your trackpad!
+
+##### 3. Want to flash a new version of your Oryx layout?
+1. Download the new source files as a `.zip` file from your Oryx layout page
+2. Unzip this file and copy the three firmware files (`config.h`,`keymap.c`,`rules.mk`) to `patched_voyager_firmware`
+3. Re-run the compile command inside `QMK MSYS`:
+	`qmk compile -kb zsa/voyager -km patched_voyager_firmware`
+4. Flash the new `.bin` file that is now inside your `qmk cd` folder, which for me was:
+	`C:\Users\<user>\qmk_firmware`
+
+---
+###### Make changes to the source files manually
 Once your existing layout compiles, you'll need to make the following changes:
 
 In `rules.mk` add:
